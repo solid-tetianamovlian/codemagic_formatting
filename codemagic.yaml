@@ -3,11 +3,14 @@ workflows:
     name: Run on Pull Request
     triggering:
       events:
+        - push
         - pull_request
       branch_patterns:
+        - pattern: main
+          include: true
         - pattern: '*'
           include: true
     scripts:
-      - name: Get dependencies
+      - name: Check Code Formatting
         script: |
-          flutter packages pub get
+          dart format --set-exit-if-changed lib/
