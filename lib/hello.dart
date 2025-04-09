@@ -5,6 +5,7 @@ class Hello extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+        print('hi');
     return Scaffold();
   }
 }
