@@ -1,6 +1,6 @@
 workflows:
-  pr_workflow:
-    name: Run on Pull Request
+  check_formatting:
+    name: Check Code Formatting 
     triggering:
       events:
         - push
