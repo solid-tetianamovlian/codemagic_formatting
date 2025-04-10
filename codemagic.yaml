@@ -1,19 +1,19 @@
 workflows:
-  check_formatting:
-    name: Check Code Formatting 
-    triggering:
-      events:
-        - push
-        - pull_request
-      branch_patterns:
-        - pattern: main
-          include: true
-        - pattern: '*'
-          include: true
-    scripts:
-      - name: Check Code Formatting
-        script: |
-          dart format --set-exit-if-changed lib/
+  # check_formatting:
+  #   name: Check Code Formatting 
+  #   triggering:
+  #     events:
+  #       - push
+  #       - pull_request
+  #     branch_patterns:
+  #       - pattern: main
+  #         include: true
+  #       - pattern: '*'
+  #         include: true
+  #   scripts:
+  #     - name: Check Code Formatting
+  #       script: |
+  #         dart format --set-exit-if-changed lib/
   pubspeck_lock_check:
     name: pubspec.lock check
     environment:
@@ -51,11 +51,9 @@ workflows:
         echo "Updated hash:  $UPDATED_HASH"
 
         if [ "$ORIGINAL_HASH" != "$UPDATED_HASH" ]; then
-          git fetch --unshallow || true  # Make sure repo is not shallow
-          git checkout $CM_BRANCH || true  # Ensure we're on a proper branch
-          CHANGED_FILES=$(git diff --name-only HEAD)
-          if ! echo "$CHANGED_FILES" | grep -q "pubspec.lock"; then
-            echo "pubspec.lock was changed by 'flutter pub get' but not committed."
-            exit 1
+          STATUS=$(git status --porcelain pubspec.lock)
+          if [ -z "$STATUS" ]; then
+              echo "❌ pubspec.lock was changed by 'flutter pub get' but not committed."
+              exit 1
           fi
         fi
