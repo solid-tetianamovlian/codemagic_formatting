@@ -19,12 +19,13 @@ workflows:
     environment:
       flutter: 3.24.3
     triggering:
-      events:
-        - pull_request
-        - push
-      branch_patterns:
-        - pattern: main
-          include: true
+    events:
+      - push
+      - pull_request
+    branch_patterns:
+      - pattern: 'main'
+        include: true
+        source: true  
     scripts:
     - name: Store original pubspec.lock
       script: |
