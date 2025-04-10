@@ -14,3 +14,38 @@ workflows:
       - name: Check Code Formatting
         script: |
           dart format --set-exit-if-changed lib/
+  pubspeck_lock_check:
+    name: pubspec.lock check
+    environment:
+      flutter: 3.24.3
+    triggering:
+      events:
+        - push
+        - pull_request
+      branch_patterns:
+        - pattern: main
+          include: true
+        - pattern: '*'
+          include: true
+    scripts:
+      - name: Store original pubspec.lock hash
+        script: |
+          if [ -f pubspec.lock ]; then
+            export ORIGINAL_HASH=$(shasum pubspec.lock | awk '{ print $1 }')
+          else
+            export ORIGINAL_HASH=""
+          fi
+
+      - name: Run flutter pub get
+        script: |
+          flutter pub get
+
+      - name: Check pubspec.lock changes are committed
+        script: |
+          UPDATED_HASH=$(shasum pubspec.lock | awk '{ print $1 }')
+          if [ "$ORIGINAL_HASH" != "$UPDATED_HASH" ]; then
+            if ! git diff --name-only | grep -q "pubspec.lock"; then
+              echo "pubspec.lock was changed by 'flutter pub get' but not committed."
+              exit 1
+            fi
+          fi
