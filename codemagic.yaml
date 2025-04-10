@@ -28,24 +28,34 @@ workflows:
         - pattern: '*'
           include: true
     scripts:
-      - name: Store original pubspec.lock hash
-        script: |
-          if [ -f pubspec.lock ]; then
-            export ORIGINAL_HASH=$(shasum pubspec.lock | awk '{ print $1 }')
-          else
-            export ORIGINAL_HASH=""
-          fi
+    - name: Store original pubspec.lock hash
+      script: |
+        if [ -f pubspec.lock ]; then
+          ORIGINAL_HASH=$(shasum pubspec.lock | awk '{ print $1 }')
+          echo "$ORIGINAL_HASH" > original.hash
+        else
+          echo "" > original.hash
+        fi
 
-      - name: Run flutter pub get
-        script: |
-          flutter pub get
 
-      - name: Check pubspec.lock changes are committed
-        script: |
-          UPDATED_HASH=$(shasum pubspec.lock | awk '{ print $1 }')
-          if [ "$ORIGINAL_HASH" != "$UPDATED_HASH" ]; then
-            if ! git diff --name-only | grep -q "pubspec.lock"; then
-              echo "pubspec.lock was changed by 'flutter pub get' but not committed."
-              exit 1
-            fi
+    - name: Run flutter pub get
+      script: |
+        flutter pub get
+
+    - name: Check pubspec.lock changes are committed
+      script: |
+        UPDATED_HASH=$(shasum pubspec.lock | awk '{ print $1 }')
+        ORIGINAL_HASH=$(cat original.hash)    
+
+        echo "Original hash: $ORIGINAL_HASH"
+        echo "Updated hash:  $UPDATED_HASH"
+
+        if [ "$ORIGINAL_HASH" != "$UPDATED_HASH" ]; then
+          git fetch --unshallow || true  # Make sure repo is not shallow
+          git checkout $CM_BRANCH || true  # Ensure we're on a proper branch
+          CHANGED_FILES=$(git diff --name-only HEAD)
+          if ! echo "$CHANGED_FILES" | grep -q "pubspec.lock"; then
+            echo "pubspec.lock was changed by 'flutter pub get' but not committed."
+            exit 1
           fi
+        fi
