@@ -28,15 +28,9 @@ workflows:
         - pattern: '*'
           include: true
     scripts:
-    - name: Store original pubspec.lock hash
+    - name: Store original pubspec.lock
       script: |
-        if [ -f pubspec.lock ]; then
-          ORIGINAL_HASH=$(shasum pubspec.lock | awk '{ print $1 }')
-          echo "$ORIGINAL_HASH" > original.hash
-        else
-          echo "" > original.hash
-        fi
-
+        cp pubspec.lock pubspec.lock.original
 
     - name: Run flutter pub get
       script: |
@@ -44,27 +38,4 @@ workflows:
 
     - name: Check pubspec.lock changes are committed
       script: |
-        UPDATED_HASH=$(shasum pubspec.lock | awk '{ print $1 }')
-        ORIGINAL_HASH=$(cat original.hash)
-
-        echo "Original hash: $ORIGINAL_HASH"
-        echo "Updated hash:  $UPDATED_HASH"
-
-        if [ "$ORIGINAL_HASH" != "$UPDATED_HASH" ]; then
-          echo "Git status:"
-          git status --porcelain
-
-          echo "Git diff (staged changes):"
-          git diff --cached --name-only
-
-          echo "Git diff (unstaged changes):"
-          git diff --name-only
-
-          STATUS=$(git status --porcelain pubspec.lock)
-          STAGED_STATUS=$(git diff --cached --name-only | grep -q "pubspec.lock")
-
-          if [ -z "$STATUS" ] && [ -z "$STAGED_STATUS" ]; then
-            echo "❌ pubspec.lock was changed by 'flutter pub get' but not committed."
-            exit 1
-          fi
-        fi
+        diff pubspec.lock pubspec.lock.original
