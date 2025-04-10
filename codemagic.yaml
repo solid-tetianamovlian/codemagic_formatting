@@ -14,17 +14,38 @@ workflows:
   #     - name: Check Code Formatting
   #       script: |
   #         dart format --set-exit-if-changed lib/
-  pubspeck_lock_check:
-    name: pubspec.lock check
+  pubspeck_lock_pr_check:
+    name: pubspec.lock PR check
     environment:
       flutter: 3.24.3
     triggering:
       events:
         - pull_request
+      branch_patterns:        
+        - pattern: '*'
+          include: true    
+    scripts:
+    - name: Store original pubspec.lock
+      script: |
+        cp pubspec.lock pubspec.lock.original
+
+    - name: Run flutter pub get
+      script: |
+        flutter pub get
+
+    - name: Check pubspec.lock changes are committed
+      script: |
+        diff pubspec.lock pubspec.lock.original
+  pubspeck_lock_main_branch_check:
+    name: pubspec.lock main branch check
+    environment:
+      flutter: 3.24.3
+    triggering:
+      events:
         - push
-      branch_patterns:
+      branch_patterns:        
         - pattern: main
-          include: true
+          include: true    
     scripts:
     - name: Store original pubspec.lock
       script: |
