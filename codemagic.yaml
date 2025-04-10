@@ -51,9 +51,11 @@ workflows:
         echo "Updated hash:  $UPDATED_HASH"
 
         if [ "$ORIGINAL_HASH" != "$UPDATED_HASH" ]; then
-          STATUS=$(git status --porcelain pubspec.lock)
-          if [ -z "$STATUS" ]; then
-              echo "❌ pubspec.lock was changed by 'flutter pub get' but not committed."
-              exit 1
-          fi
+            STATUS=$(git status --porcelain pubspec.lock)
+            STAGED_STATUS=$(git diff --cached --name-only | grep -q "pubspec.lock")
+
+            if [ -z "$STATUS" ] && [ -z "$STAGED_STATUS" ]; then
+                echo "❌ pubspec.lock was changed by 'flutter pub get' but not committed."
+                exit 1
+            fi
         fi
